@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>demo</title>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <div id="app" class="app"></div>
+
+  <script src="../dist/poke_modules/poke_1_151.js"></script>
+  <script src="../dist/pokemon.min.js"></script>
+  <script>
+    function createPokemon(){
+      var app = document.getElementById('app');
+      for(var i=1; i<=151; i++){
+        var p = new Pokemon(i);
+
+        var div = document.createElement('div');
+        div.className = 'pokemon pokemon-'+i;
+        var info = document.createElement('div');
+        info.className = 'pokemon-info';
+        info.innerHTML = '[ '+p.getId()+' ] '+p.getName('zh')+' '+p.getName();
+        div.appendChild(p.go());
+        div.appendChild(info);
+        app.appendChild(div);
+      }
+    }
+    createPokemon();
+  </script>
+</body>
+</html>
