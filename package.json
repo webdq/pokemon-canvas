@@ -1,6 +1,6 @@
 {
   "name": "pokemon-canvas",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "pokemon-canvas,create a pokemon of [object canvas]",
   "main": "pokemon.js",
   "scripts": {

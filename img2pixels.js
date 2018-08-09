@@ -3,6 +3,7 @@ const path = require('path');
 const getPixels = require("get-pixels");
 
 saveData(1,151);
+saveData(152,251);
 
 
 function saveData(start,end){

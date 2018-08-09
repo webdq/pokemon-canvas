@@ -2,8 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const getPixels = require("get-pixels");
 
-saveCss(1,151);
-
+saveCss(1,251);
 
 function saveCss(start,end){
   let promise_arr = [];
