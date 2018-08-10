@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const getPixels = require("get-pixels");
 
-saveCss(1,251);
+saveCss(1,386);
 
 function saveCss(start,end){
   let promise_arr = [];
@@ -30,7 +30,7 @@ function saveCss(start,end){
   }
 
   Promise.all(promise_arr).then(function(){
-    let style = `body,div,canvas{ margin: 0; padding: 0; }\n.app{ display: flex; flex-wrap: wrap; width: 900px; margin: 0 auto; }\n.pokemon{ display: flex; width: 150px; height: 150px; justify-content: center; align-items: center; position: relative; }\n.pokemon-info{position: absolute; left: 0; bottom: 0; right: 0; padding: 4px; font-size: 12px; background: rgba(0,0,0,.2); color: #fff; width: 100%; box-sizing: border-box; }\n.pokemon canvas{ position: relative; z-indes: 2; }\n`;
+    let style = `body,div,canvas{ margin: 0; padding: 0; }\n.app{ display: flex; flex-wrap: wrap; width: 1080px; margin: 0 auto; }\n.pokemon{ display: flex; width: 180px; height: 150px; justify-content: center; align-items: center; position: relative; }\n.pokemon-info{position: absolute; left: 0; bottom: 0; right: 0; padding: 4px; font-size: 12px; background: rgba(0,0,0,.2); color: #fff; width: 100%; box-sizing: border-box; }\n.pokemon canvas{ position: relative; z-index: 2; }\n`;
     fs.writeFileSync(path.join(__dirname,'demo','style.css'),`${style}`+css.join('\n'));
   });
 

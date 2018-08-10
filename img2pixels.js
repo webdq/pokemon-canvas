@@ -4,6 +4,7 @@ const getPixels = require("get-pixels");
 
 saveData(1,151);
 saveData(152,251);
+saveData(252,386);
 
 
 function saveData(start,end){

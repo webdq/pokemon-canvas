@@ -57,8 +57,16 @@
     var poke = null;
     if(window['poke_'+id]){
       poke = window['poke_'+id][id];
-    }else if(id <= 151){
+    }else if(id >= 1 && id <= 151){
       if(window['poke_1_151']) poke = window['poke_1_151'][id];
+    }else if(id >= 152 && id <= 251){
+      if(window['poke_152_251']) poke = window['poke_152_251'][id];
+    }else if(id >= 252 && id <= 386){
+      if(window['poke_252_386']) poke = window['poke_252_386'][id];
+    }else if(id >= 387 && id <= 494){
+      if(window['poke_387_494']) poke = window['poke_387_494'][id];
+    }else if(id >= 495 && id <= 649){
+      if(window['poke_495_649']) poke = window['poke_495_649'][id];
     }
 
     this.id = poke ? id : 0;

@@ -6,6 +6,9 @@
 
 ------
 
+## 版本 1.2
+- pokemon数量 NO.252-386
+
 ## 版本 1.1
 - pokemon数量 NO.152-251
 
@@ -28,13 +31,13 @@
 ```
 poke.js模块要在pokemon.js之前引入
 
-引入单个模块
+引入单个模块 [poke_1.js , poke_2.js , ...]
 <script src="./dist/poke_modules/poke_1.js"></script>
 
-引入集合模块
+引入集合模块 [poke_1_151.js , poke_152_251.js , poke_251_386.js]
 <script src="./dist/poke_modules/poke_1_151.js"></script>
 
-引入pokemon.js或pokemon.min.js
+引入pokemon.js [pokemon.js , pokemon.min.js]
 <script src="./dist/pokemon.min.js"></script>
 ```
 
