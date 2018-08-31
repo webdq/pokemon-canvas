@@ -1,10 +1,11 @@
 /**
  * create a pokemon of [object canvas]
  * @preserve
- * @version  1.0
+ * @version  1.4
  * @return  [class Pokemon]
  * @author  [webdq]
  * @email  [d312697510@126.com]
+ * @github https://github.com/webdq/pokemon-canvas
  * @design from http://pokepalettes.com/
  */
 
