@@ -1,7 +1,7 @@
 /**
  * create a pokemon of [object canvas]
  * @preserve
- * @version  1.4
+ * @version  1.4.1
  * @return  [class Pokemon]
  * @author  [webdq]
  * @email  [d312697510@126.com]
@@ -11,24 +11,265 @@
 
 ;(function(window,undefined){
 
-  function hasPoke(){
-    var keys = Object.keys(window);
-    var reg = /^poke(_\d+){1,2}$/;
-    for(var i=0; i<keys.length; i++){
-      if(reg.test(keys[i])){
-        return true;
-      }
+  function Binary(initData, p, l, bl) {
+    var data = initData && initData.constructor == Array ? initData.slice() : [],
+    p = p | 0,
+    l = l | 0,
+    bl = Math.max((bl || 8) | 0, 1),
+    mask = m(bl),
+    _m = 0xFFFFFFFF; //数据，指针，长度，位长度，遮罩
+    this.data = function(index, value) {
+        if (!isNaN(value)) data[index] = (value | 0) || 0;
+        if (!isNaN(index)) return data[index];
+        else return data.slice();
     }
-    return false;
+
+    this.read = function() {
+        var re;
+        if (p >= l) return 0;
+        if (32 - (p % 32) < bl) {
+            re = (((data[p >> 5] & m(32 - (p % 32))) << ((p + bl) % 32)) | (data[(p >> 5) + 1] >>> (32 - ((p + bl) % 32)))) & mask;
+        } else {
+            re = (data[p >> 5] >>> (32 - (p + bl) % 32)) & mask;
+        }
+        p += bl;
+        return re;
+    }
+
+    this.write = function(i) {
+        var i, hi, li;
+        i &= mask;
+        if (32 - (l % 32) < bl) {
+            data[l >> 5] |= i >>> (bl - (32 - (l % 32)));
+            data[(l >> 5) + 1] |= (i << (32 - ((l + bl) % 32))) & _m;
+        } else {
+            data[l >> 5] |= (i << (32 - ((l + bl) % 32))) & _m;
+        }
+        l += bl;
+    }
+
+    this.eof = function() {
+        return p >= l;
+    }
+
+    this.reset = function() {
+        p = 0;
+        mask = m(bl);
+    }
+    this.resetAll = function() {
+        data = [];
+        p = 0;
+        l = 0;
+        bl = 8;
+        mask = m(bl);
+        _m = 0xFFFFFFFF;
+    }
+
+    this.setBitLength = function(len) {
+        bl = Math.max(len | 0, 1);
+        mask = m(bl);
+    }
+
+    this.toHexString = function() {
+        var re = [];
+        for (var i = 0; i < data.length; i++) {
+            if (data[i] < 0) {
+                re.push(pad((data[i] >>> 16).toString(16), 4) + pad((data[i] & 0xFFFF).toString(16), 4));
+            } else {
+                re.push(pad(data[i].toString(16), 8));
+            }
+        }
+        return re.join("");
+    }
+
+    this.toBinaryString = function() {
+        var re = [];
+        for (var i = 0; i < data.length; i++) {
+            if (data[i] < 0) {
+                re.push(pad((data[i] >>> 1).toString(2), 31) + (data[i] & 1));
+            } else {
+                re.push(pad(data[i].toString(2), 32));
+            }
+        }
+        return re.join("").substring(0, l);
+    }
+
+    this.toCString = function() {
+        var _p = p,
+        _bl = bl,
+        re = [];
+        this.setBitLength(13);
+        this.reset();
+        while (p < l) re.push(C(this.read()));
+        this.setBitLength(_bl);
+        p = _p;
+        return C(l >>> 13) + C(l & m(13)) + re.join("");
+    }
+
+    this.fromCString = function(str) {
+        this.resetAll();
+        this.setBitLength(13);
+        for (var i = 2; i < str.length; i++) this.write(D(str, i));
+        l = (D(str, 0) << 13) | (D(str, 1) & m(13));
+        return this;
+    }
+
+    this.clone = function() {
+        return new Binary(data, p, l, bl);
+    }
+    function m(len) {
+        return (1 << len) - 1;
+    }
+    function pad(s, len) {
+        return (new Array(len + 1)).join("0").substring(s.length) + s;
+    }
+    function C(i) {
+        return String.fromCharCode(i + 0x4e00);
+    }
+    function D(s, i) {
+        return s.charCodeAt(i) - 0x4e00;
+    }
   }
 
-  if(!hasPoke()){
-    console.error('[poke_\\d.js] data is required,and it\'s included before pokemon_canvas.js');
-    return;
+  //压缩
+  function lzw_compress(str) {
+      var b = new Binary(),
+      code_index = -1,
+      char_len = 8;
+      var str = str.replace(/[\u0100-\uFFFF]/g,
+      function(s) {
+          return "\&\#u" + pad(s.charCodeAt(0).toString(16), 4) + ";";
+      });
+      var dic = {},
+      cp = [],
+      cpi,
+      bl = 8;
+      b.setBitLength(bl);
+      for (var i = 0; i < (1 << char_len) + 2; i++) dic[i] = ++code_index;
+      cp[0] = str.charCodeAt(0);
+      for (var i = 1; i < str.length; i++) {
+          cp[1] = str.charCodeAt(i);
+          cpi = (cp[0] << 16) | cp[1];
+          if (dic[cpi] == undefined) {
+              dic[cpi] = (++code_index);
+              if (cp[0] > m(bl)) {
+                  b.write(0x80);
+                  b.setBitLength(++bl);
+              }
+              b.write(cp[0]);
+              cp[0] = cp[1];
+          } else {
+              cp[0] = dic[cpi];
+          }
+      }
+      b.write(cp[0]);
+      function pad(s, len) {
+          return (new Array(len + 1)).join("0").substring(s.length) + s;
+      }
+      function m(len) {
+          return (1 << len) - 1;
+      }
+      return b.toCString();
+  }
+
+  // 解压
+  function lzw_decompress(s) {
+      var b = new
+      function() {
+          var d = [],
+          p = 0,
+          l = 0,
+          L = 13,
+          k = m(L),
+          _m = 0xFFFFFFFF;
+          this.r = function() {
+              var r;
+              if (32 - (p % 32) < L) r = (((d[p >> 5] & m(32 - (p % 32))) << ((p + L) % 32)) | (d[(p >> 5) + 1] >>> (32 - ((p + L) % 32)))) & k;
+              else r = (d[p >> 5] >>> (32 - (p + L) % 32)) & k;
+              p += L;
+              return r;
+          };
+          this.w = function(i) {
+              i &= k;
+              if (32 - (l % 32) < L) {
+                  d[l >> 5] |= i >>> (L - (32 - (l % 32)));
+                  d[(l >> 5) + 1] |= (i << (32 - ((l + L) % 32))) & _m;
+              } else d[l >> 5] |= (i << (32 - ((l + L) % 32))) & _m;
+              l += L;
+          };
+          this.e = function() {
+              return p >= l;
+          };
+          this.l = function(len) {
+              L = Math.max(len | 0, 1);
+              k = m(L);
+          };
+          function m(len) {
+              return (1 << len) - 1;
+          }
+          function pad(s, l) {
+              return (new Array(l + 1)).join("0").substring(s.length) + s;
+          }
+          for (var i = 2; i < s.length; i++) this.w(s.charCodeAt(i) - 0x4e00);
+          l = ((s.charCodeAt(0) - 0x4e00) << 13) | ((s.charCodeAt(1) - 0x4e00) & m(13));
+          p = 0;
+      };
+      var R = [],
+      C = -1,
+      D = {},
+      P = [],
+      L = 8;
+      for (i = 0; i < (1 << L) + 2; i++) D[i] = String.fromCharCode(++C);
+      b.l(L);
+      P[0] = b.r();
+      while (!b.e()) {
+          P[1] = b.r();
+          if (P[1] == 0x80) {
+              b.l(++L);
+              P[1] = b.r();
+          }
+          if (D[P[1]] == undefined) D[++C] = D[P[0]] + D[P[0]].charAt(0);
+          else D[++C] = D[P[0]] + D[P[1]].charAt(0);
+          R.push(D[P[0]]);
+          P[0] = P[1];
+      }
+      R.push(D[P[0]]);
+      return R.join("").replace(/\&\#u[0-9a-fA-F]{4};/g,
+      function(w) {
+          return String.fromCharCode(parseInt(w.substring(3, 7), 16));
+      });
+  }
+
+  function hex2rgba(hex){
+    var alpha = '';
+    var SafeHex = '';
+    if(hex.length == 5){
+      alpha = hex.substring(3,5);
+      hex = hex.substring(0,3);
+    }else if(hex.length == 8){
+      alpha = hex.substring(6,8);
+      hex = hex.substring(0,6);
+    }else{
+      alpha = 'ff';
+      hex = '000000';
+    }
+
+    if (hex.length == 3) {
+      for (var i=0; i<6; i++) SafeHex += hex.substring(i,i+1) + hex.substring(i,i+1);
+    } else if (hex.length == 6) {
+      SafeHex = hex;
+    }
+    var ResultR = parseInt(SafeHex.substring(0,2), 16);
+    var ResultG = parseInt(SafeHex.substring(2,4), 16);
+    var ResultB = parseInt(SafeHex.substring(4,6), 16);
+    var ResultA = parseInt(alpha, 16);
+
+    return "rgba("+ResultR+", "+ResultG+", "+ResultB+", "+ResultA+")";
   }
 
   var Pokemon = function(id,option){
     this.id = 0;
+    this.poke = null;
     this.canvas = null;
     this.canvas_width = 100;
     this.canvas_height = 100;
@@ -43,54 +284,50 @@
 
   Pokemon.prototype.init = function(id,option){
     id = parseInt(id);
-    id = (isNaN(id) || id < 0) ? 0 : id;
-    this.id = id;
+    this.id = id > 0 ? id : 0;
     if(option && typeof option == 'object'){
+      this.canvas_width = option.canvas_width;
+      this.canvas_height = option.canvas_height;
+      this.color = option.color;
       var pixel = parseInt(option.pixel);
-      if(option.pixel && !isNaN(pixel)){
-        this.pixel = pixel;
-      }
+      this.pixel = pixel > 1 ? pixel : 1;
     }
   }
 
   Pokemon.prototype.getPoke = function(){
-    var id = this.id;
-    var poke = null;
-    if(window['poke_'+id]){
-      poke = window['poke_'+id][id];
-    }else if(id >= 1 && id <= 151){
-      if(window['poke_1_151']) poke = window['poke_1_151'][id];
-    }else if(id >= 152 && id <= 251){
-      if(window['poke_152_251']) poke = window['poke_152_251'][id];
-    }else if(id >= 252 && id <= 386){
-      if(window['poke_252_386']) poke = window['poke_252_386'][id];
-    }else if(id >= 387 && id <= 494){
-      if(window['poke_387_494']) poke = window['poke_387_494'][id];
-    }else if(id >= 495 && id <= 649){
-      if(window['poke_495_649']) poke = window['poke_495_649'][id];
-    }
-
-    this.id = poke ? id : 0;
-    this.canvas_width = poke ? poke.width : 100;
-    this.canvas_height = poke ? poke.height : 100;
-    this.color = poke ? poke.color: [];
-    this.rect = poke ? poke.rect : [];
+    var poke = window['poke_'+this.id];
+    this.poke = poke ? poke : null;
+    this.canvas_width = poke ? poke.w : 100;
+    this.canvas_height = poke ? poke.h : 100;
+    this.color = poke ? poke.c: [];
+    this.rect = poke ? poke.r : [];
   }
 
   Pokemon.prototype.draw = function(){
+    var width = this.canvas_width*this.pixel;
+    var height = this.canvas_height*this.pixel;
     this.canvas = window.document.createElement('canvas');
-    this.canvas.setAttribute("width",this.canvas_width*this.pixel);
-    this.canvas.setAttribute("height",this.canvas_height*this.pixel);
+    this.canvas.setAttribute("width",width);
+    this.canvas.setAttribute("height",height);
     var ctx = this.canvas.getContext("2d");
-
-    for(var i=0; i<this.rect.length; i++){
-      var row = this.rect[i];
-      for(var j=0; j<row.length; j++){
-        var x = this.pixel * j;
-        var y = this.pixel * i;
-        ctx.fillStyle = this.color[row[j]];
+    if(this.poke){
+      var rect = lzw_decompress(this.rect);
+      var row = -1;
+      for(var i=0; i<rect.length; i++){
+        if(i % this.canvas_width == 0) row++;
+        var x = this.pixel * (i % this.canvas_width);
+        var y = this.pixel * row;
+        var c = this.color[parseInt(rect[i],32)];
+        c = c ? c : '000000ff';
+        c = hex2rgba(c);
+        ctx.fillStyle = c;
         ctx.fillRect(x,y,this.pixel,this.pixel);
       }
+    }else{
+      ctx.fillStyle = '#ccc';
+      ctx.fillRect(0,0,width,height);
+      ctx.fillStyle = '#888';
+      ctx.fillText('pokemon不存在', 4, height/2);
     }
   }
 
@@ -120,13 +357,9 @@
 
   if ( typeof module === "object" && module && typeof module.exports === "object" ) {
     module.exports = Pokemon;
-  } else {
-    if ( typeof define === "function" && define.amd ) {
-      define( "Pokemon", [], function () { return Pokemon; } );
-    }
-  }
-
-  if ( typeof window === "object" && typeof window.document === "object" ) {
+  } else if ( typeof define === "function" && define.amd ) {
+    define( "Pokemon", [], function () { return Pokemon; } );
+  }else{
     window.Pokemon = Pokemon;
   }
 

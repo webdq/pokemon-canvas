@@ -8,29 +8,36 @@
 <body>
   <div id="app" class="app"></div>
 
-  <script src="../dist/poke_modules/poke_1_151.js"></script>
-  <script src="../dist/poke_modules/poke_152_251.js"></script>
-  <script src="../dist/poke_modules/poke_252_386.js"></script>
-  <script src="../dist/poke_modules/poke_387_494.js"></script>
-  <script src="../dist/poke_modules/poke_495_649.js"></script>
-  <script src="../dist/pokemon.min.js"></script>
-  <script>
-    function createPokemon(){
-      var app = document.getElementById('app');
-      for(var i=1; i<=649; i++){
-        var p = new Pokemon(i);
+<script src="../dist/poke_modules/poke_1.js"></script>
+<script src="../dist/poke_modules/poke_2.js"></script>
+<script src="../dist/poke_modules/poke_3.js"></script>
+<script src="../dist/poke_modules/poke_4.js"></script>
+<script src="../dist/poke_modules/poke_5.js"></script>
+<script src="../dist/poke_modules/poke_6.js"></script>
+<script src="../dist/poke_modules/poke_7.js"></script>
+<script src="../dist/poke_modules/poke_8.js"></script>
+<script src="../dist/poke_modules/poke_9.js"></script>
+<script src="../dist/poke_modules/poke_10.js"></script>
+<script src="../dist/poke_modules/poke_11.js"></script>
+<script src="../dist/poke_modules/poke_12.js"></script>
+<script src="../pokemon.js"></script>
+<script>
+  function createPokemon(){
+    var app = document.getElementById('app');
+    for(var i=1; i<=12; i++){
+      var p = new Pokemon(i);
 
-        var div = document.createElement('div');
-        div.className = 'pokemon pokemon-'+i;
-        var info = document.createElement('div');
-        info.className = 'pokemon-info';
-        info.innerHTML = '[ '+p.getId()+' ] '+p.getName('zh')+' '+p.getName();
-        div.appendChild(p.go());
-        div.appendChild(info);
-        app.appendChild(div);
-      }
+      var div = document.createElement('div');
+      div.className = 'pokemon pokemon-'+i;
+      var info = document.createElement('div');
+      info.className = 'pokemon-info';
+      info.innerHTML = '[ '+p.getId()+' ] '+p.getName('zh')+' '+p.getName();
+      div.appendChild(p.go());
+      div.appendChild(info);
+      app.appendChild(div);
     }
-    createPokemon();
-  </script>
+  }
+  createPokemon();
+</script>
 </body>
 </html>
